@@ -5,3 +5,7 @@ OrderPortal.Tests/obj/
 OrderPortal.ServiceDefaults/obj/Debug/net8.0/OrderPortal.ServiceDefaults.GeneratedMSBuildEditorConfig.editorconfig
 OrderPortal.ServiceDefaults/obj/
 OrderPortal.AppHost/
+OrderPortal.ApiService/bin/
+OrderPortal.ApiService/obj/
+OrderPortal.ServiceDefaults/bin/
+OrderPortal.Tests/bin/
