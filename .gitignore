@@ -1,1 +1,7 @@
 .vs/
+OrderPortal.Web/obj/
+OrderPortal.Web/bin/
+OrderPortal.Tests/obj/
+OrderPortal.ServiceDefaults/obj/Debug/net8.0/OrderPortal.ServiceDefaults.GeneratedMSBuildEditorConfig.editorconfig
+OrderPortal.ServiceDefaults/obj/
+OrderPortal.AppHost/

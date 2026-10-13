@@ -1,0 +1,29 @@
+@hostname = https://localhost
+@port = 7532
+@baseUrl = {{hostname}}:{{port}}/api/product
+
+### 1. Create Product 1 (POST)
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "id": "1",
+  "name": "Mechanical Keyboard",
+  "price": 89.99
+}
+
+### 2. Create Product 2 (POST)
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "id": "2",
+  "name": "Gaming Mouse",
+  "price": 49.99
+}
+
+### 3. Get All Products (GET)
+GET {{baseUrl}}
+
+### 4. Get Product by ID (GET)
+GET {{baseUrl}}/1

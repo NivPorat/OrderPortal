@@ -5,9 +5,9 @@ builder.AddServiceDefaults();
 
 // Add services to the container.
 builder.Services.AddProblemDetails();
-
+builder.Services.AddControllers();
 var app = builder.Build();
-
+app.MapControllers();
 // Configure the HTTP request pipeline.
 app.UseExceptionHandler();
 
