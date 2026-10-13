@@ -10,9 +10,10 @@ namespace OrderPortal.ApiService.Controllers
     {
         private readonly ILogger<ProductController> _logger;
         private static readonly List<Product> _products = new List<Product>();
-        public ProductController(ILogger logger)
+
+        public ProductController(ILogger<ProductController> logger)
         {
-            _logger = logger as ILogger<ProductController> ?? throw new ArgumentNullException(nameof(logger));
+            _logger = logger;
         }
 
         [HttpGet("{id}")]
