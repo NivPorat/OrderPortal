@@ -1,3 +1,7 @@
+using OrderPortal.ApiService;
+using OrderPortal.ApiService.Models;
+using OrderPortal.ApiService.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add service defaults & Aspire client integrations.
@@ -6,6 +10,9 @@ builder.AddServiceDefaults();
 // Add services to the container.
 builder.Services.AddProblemDetails();
 builder.Services.AddControllers();
+builder.Services.Configure<ProductSettingsConfig>(builder.Configuration.GetSection("ProductSettings"));
+builder.Services.AddSingleton<IProductLogic, ProductLogicService>();
+
 var app = builder.Build();
 app.MapControllers();
 // Configure the HTTP request pipeline.
