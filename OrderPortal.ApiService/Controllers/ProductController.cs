@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using OrderPortal.ApiService.Models;
+using static OrderPortal.ApiService.Models.EnumDefinitions;
 
 namespace OrderPortal.ApiService.Controllers
 {
@@ -9,48 +10,47 @@ namespace OrderPortal.ApiService.Controllers
     public class ProductController : ControllerBase
     {
         private readonly ILogger<ProductController> _logger;
-        private static readonly List<Product> _products = new List<Product>();
+        private readonly IProductLogic _productLogic;
 
-        public ProductController(ILogger<ProductController> logger)
+        public ProductController(ILogger<ProductController> logger, IProductLogic productLogic)
         {
             _logger = logger;
+            _productLogic = productLogic;
         }
 
         [HttpGet("{id}")]
-        public IActionResult GetProduct(string id)
+        public async Task<IActionResult> GetProductAsync(string id, CancellationToken cancellationToken)
         {
-            var product = _products.FirstOrDefault(p => p.Id == id);
-            if (product == null)
+            var product = await _productLogic.GetProduct(id, cancellationToken);
+            if (product is null)
             {
-                _logger.LogWarning("Product with ID {ProductId} not found.", id);
                 return NotFound();
             }
-            _logger.LogInformation("Product with ID {ProductId} retrieved successfully.", id);
             return Ok(product);
         }
-        [HttpGet]
-        public IActionResult GetAllProducts()
-        {
-            _logger.LogInformation("Retrieving all products. Total count: {ProductCount}", _products.Count);
-            return Ok(_products);
-        }
 
-        [HttpPost]
-        public IActionResult AddProduct(Product product)
+        [HttpGet]
+        public async Task<IActionResult> GetAllProductsAsync(CancellationToken cancellationToken)
         {
-            if (product == null || string.IsNullOrEmpty(product.Id))
+            var products = await _productLogic.GetAllProducts(cancellationToken);
+            return Ok(products);
+        }
+        [HttpPost]
+        public async Task<IActionResult> AddProductAsync(Product product, CancellationToken cancellationToken)
+        {
+            
+            EProductAdded retVal = await _productLogic.AddProduct(product, cancellationToken);
+
+            if (retVal == EProductAdded.PRODUCT_ADD_FAILED)
             {
-                _logger.LogWarning("Invalid product data received.");
                 return BadRequest("Invalid product data.");
             }
-            if (_products.Any(p => p.Id == product.Id))
+            if (retVal == EProductAdded.PRODUCT_EXISTS)
             {
-                _logger.LogWarning("Product with ID {ProductId} already exists.", product.Id);
                 return Conflict("Product with the same ID already exists.");
             }
-            _products.Add(product);
-            _logger.LogInformation("Product with ID {ProductId} added successfully.", product.Id);
-            return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, product);
+
+            return CreatedAtAction(nameof(GetProductAsync), new { id = product.Id }, product);
         }
     }
 }
