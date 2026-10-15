@@ -21,6 +21,15 @@ Content-Type: application/json
   "name": "Gaming Mouse",
   "price": 49.99
 }
+### 2. Create Product 3 (POST)
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "Id": "3",
+  "name": "Gaming Mouse good",
+  "price": 49.999
+}
 
 ### 3. Get All Products (GET)
 GET {{baseUrl}}
