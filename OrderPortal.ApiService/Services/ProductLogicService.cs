@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using OrderPortal.ApiService.Controllers;
 using OrderPortal.ApiService.Models;
 using System.Threading;
@@ -10,20 +11,18 @@ namespace OrderPortal.ApiService.Services
     {
         private readonly ProductSettingsConfig _settings;
         private readonly ILogger<ProductLogicService> _logger;
-        private  readonly List<Product> _products = new List<Product>();
         private readonly int _maxProducts;
-        public ProductLogicService(IOptions<ProductSettingsConfig> productSettings, ILogger<ProductLogicService> logger) 
+        private readonly OrderDbContext _context;
+        public ProductLogicService(IOptions<ProductSettingsConfig> productSettings, ILogger<ProductLogicService> logger, OrderDbContext dbset) 
         {
             _settings = productSettings.Value;
             _logger = logger;
             _maxProducts = int.Parse(_settings.MaxProducts);
+            _context = dbset;
         }
         public async Task<Product?> GetProduct(string id, CancellationToken cancellationToken)
         {
-            // This safely awaits a zero-delay while listening for cancellation
-            await Task.Delay(0, cancellationToken);
-
-            var product = _products.FirstOrDefault(p => p.Id == id);
+            var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
             if (product == null)
             {
                 _logger.LogWarning("Product with ID {ProductId} not found.", id);
@@ -36,17 +35,15 @@ namespace OrderPortal.ApiService.Services
 
         public async Task<List<Product>> GetAllProducts(CancellationToken cancellationToken)
         {
-            await Task.Delay(0, cancellationToken);
 
-           _logger.LogInformation("Retrieving all products. Total count: {ProductCount}", _products.Count);
-            return _products;
+           _logger.LogInformation("Retrieving all products. Total count: {ProductCount}",await _context.Products.CountAsync(cancellationToken));
+            return await _context.Products.ToListAsync(cancellationToken);
         }
 
         public async Task<EProductAdded> AddProduct(Product product, CancellationToken cancellationToken)
         {
-            await Task.Delay(0, cancellationToken);
             EProductAdded rv = EProductAdded.PRODUCT_ADD_SUCCEEDED;
-            if (_products.Count > _maxProducts)
+            if (await _context.Products.CountAsync(cancellationToken) > _maxProducts)
             {
                 _logger.LogWarning($"Product count cannot Exceed maximum {_maxProducts}.");
                 rv = EProductAdded.PRODUCT_ADD_FAILED;
@@ -58,13 +55,14 @@ namespace OrderPortal.ApiService.Services
                 rv = EProductAdded.PRODUCT_ADD_FAILED;
                 return rv;
             }
-            if (_products.Any(p => p.Id == product.Id))
+            if (await _context.Products.AnyAsync(p => p.Id == product.Id, cancellationToken))
             {
                 _logger.LogWarning("Product with ID {ProductId} already exists.", product.Id);
                 rv = EProductAdded.PRODUCT_EXISTS;
                 return rv;
             }
-            _products.Add(product);
+            await _context.Products.AddAsync(product, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
             _logger.LogInformation("Product with ID {ProductId} added successfully.", product.Id);
             return rv;
         }
