@@ -1,6 +1,8 @@
 using OrderPortal.ApiService;
 using OrderPortal.ApiService.Models;
 using OrderPortal.ApiService.Services;
+using Npgsql.EntityFrameworkCore.PostgreSQL;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,8 +12,10 @@ builder.AddServiceDefaults();
 // Add services to the container.
 builder.Services.AddProblemDetails();
 builder.Services.AddControllers();
+string dbConnectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
+builder.Services.AddDbContext<OrderDbContext>(options => options.UseNpgsql(dbConnectionString));
 builder.Services.Configure<ProductSettingsConfig>(builder.Configuration.GetSection("ProductSettings"));
-builder.Services.AddSingleton<IProductLogic, ProductLogicService>();
+builder.Services.AddScoped<IProductLogic, ProductLogicService>();
 
 var app = builder.Build();
 app.MapControllers();
