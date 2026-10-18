@@ -13,6 +13,7 @@
   <ItemGroup>
     <ProjectReference Include="..\OrderPortal.ApiService\OrderPortal.ApiService.csproj" />
     <ProjectReference Include="..\OrderPortal.Web\OrderPortal.Web.csproj" />
+    <ProjectReference Include="..\OrderPortal.OrderService\OrderPortal.OrderService.csproj" />
   </ItemGroup>
 
   <ItemGroup>
