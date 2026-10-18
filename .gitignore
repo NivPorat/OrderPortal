@@ -9,3 +9,5 @@ OrderPortal.ApiService/bin/
 OrderPortal.ApiService/obj/
 OrderPortal.ServiceDefaults/bin/
 OrderPortal.Tests/bin/
+OrderPortal.OrderService/bin/
+OrderPortal.OrderService/obj/
