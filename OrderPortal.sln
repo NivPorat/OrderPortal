@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36327.8 d17.14
+VisualStudioVersion = 17.14.36327.8
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderPortal.AppHost", "OrderPortal.AppHost\OrderPortal.AppHost.csproj", "{85541939-11C9-4E34-A624-A83B5424C6D6}"
 EndProject
@@ -11,6 +11,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderPortal.Web", "OrderPortal.Web\OrderPortal.Web.csproj", "{CDCFAF12-B796-E5A2-E6B4-0117C2EF0201}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderPortal.Tests", "OrderPortal.Tests\OrderPortal.Tests.csproj", "{4C95D473-952F-37FC-AB11-59D614DD7A1E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderPortal.OrderService", "OrderPortal.OrderService\OrderPortal.OrderService.csproj", "{B601EB4D-19CE-4146-BA95-F8F81F7F6CC0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -38,6 +40,10 @@ Global
 		{4C95D473-952F-37FC-AB11-59D614DD7A1E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4C95D473-952F-37FC-AB11-59D614DD7A1E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4C95D473-952F-37FC-AB11-59D614DD7A1E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B601EB4D-19CE-4146-BA95-F8F81F7F6CC0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B601EB4D-19CE-4146-BA95-F8F81F7F6CC0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B601EB4D-19CE-4146-BA95-F8F81F7F6CC0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B601EB4D-19CE-4146-BA95-F8F81F7F6CC0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
