@@ -1,0 +1,15 @@
+@OrderPortal_HostAddress = https://localhost:7242
+@productId = 1
+
+### 1. Create a New Order
+POST {{OrderPortal_HostAddress}}/order
+Content-Type: application/json
+
+{
+  "productId": "{{productId}}",
+  "quantity": 2
+}
+
+### 2. Get Order by ID (Replace the GUID below with the ID returned from the POST response)
+GET {{OrderPortal_HostAddress}}/order/1
+Accept: application/json
