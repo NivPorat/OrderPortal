@@ -18,7 +18,7 @@ namespace OrderPortal.ApiService.Controllers
             _productLogic = productLogic;
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id}", Name = "GetProductById")]
         public async Task<IActionResult> GetProductAsync(string id, CancellationToken cancellationToken)
         {
             var product = await _productLogic.GetProduct(id, cancellationToken);
@@ -50,7 +50,7 @@ namespace OrderPortal.ApiService.Controllers
                 return Conflict("Product with the same ID already exists.");
             }
 
-            return CreatedAtAction(nameof(GetProductAsync), new { id = product.Id }, product);
+            return CreatedAtRoute("GetProductById", new { id = product.Id }, product);
         }
     }
 }
