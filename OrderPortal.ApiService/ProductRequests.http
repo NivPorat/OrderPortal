@@ -36,3 +36,18 @@ GET {{baseUrl}}
 
 ### 4. Get Product by ID (GET)
 GET {{baseUrl}}/1
+
+### Update an existing product (PUT)
+PUT {{baseUrl}}/1
+Content-Type: application/json
+
+{
+  "id": "1",
+  "name": "Updated Product Name",
+  "price": 497.99
+}
+
+### ---
+
+### Delete a product (DELETE)
+DELETE {{baseUrl}}/1
