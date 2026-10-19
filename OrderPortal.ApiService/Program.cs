@@ -3,6 +3,7 @@ using OrderPortal.ApiService.Models;
 using OrderPortal.ApiService.Services;
 using Npgsql.EntityFrameworkCore.PostgreSQL;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +13,7 @@ builder.AddServiceDefaults();
 // Add services to the container.
 builder.Services.AddProblemDetails();
 builder.Services.AddControllers();
+builder.AddRedisDistributedCache("redis");
 string dbConnectionString = builder.Configuration.GetConnectionString("ProductConnection")
                            ?? builder.Configuration.GetConnectionString("DefaultConnection")
                            ?? string.Empty;
@@ -20,7 +22,7 @@ builder.Services.AddDbContext<OrderDbContext>(options =>
     options.UseNpgsql(dbConnectionString));
 builder.Services.Configure<ProductSettingsConfig>(builder.Configuration.GetSection("ProductSettings"));
 builder.Services.AddScoped<IProductLogic, ProductLogicService>();
-
+builder.Services.AddScoped<CachingService>();
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())

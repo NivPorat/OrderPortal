@@ -2,9 +2,9 @@ using Aspire.Hosting;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-// 1. Add PostgreSQL container resource
 var postgres = builder.AddPostgres("postgres")
     .WithDataVolume();
+var redis = builder.AddRedis("redis");
 
 var orderDb = postgres.AddDatabase("DefaultConnection", "orderportaldb");
 var productDb = postgres.AddDatabase("ProductConnection", "productportaldb");
@@ -15,7 +15,8 @@ var adminer = builder.AddContainer("adminer", "adminer")
 
 var apiService = builder.AddProject<Projects.OrderPortal_ApiService>("apiservice")
     .WithHttpHealthCheck("/health")
-    .WithReference(productDb);
+    .WithReference(productDb)
+    .WithReference(redis); ;
 
 var orderService = builder.AddProject<Projects.OrderPortal_OrderService>("orderservice")
     .WithReference(apiService)
@@ -29,5 +30,5 @@ var web = builder.AddProject<Projects.OrderPortal_Web>("webfrontend")
     .WithReference(orderService)
     .WaitFor(apiService)
     .WaitFor(orderService);
-
+    
 builder.Build().Run();
