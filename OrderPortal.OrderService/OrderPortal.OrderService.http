@@ -1,5 +1,5 @@
 @OrderPortal_HostAddress = https://localhost:7242
-@productId = 1
+@productId = 2
 
 ### 1. Create a New Order
 POST {{OrderPortal_HostAddress}}/order

@@ -20,11 +20,20 @@ builder.Services.AddHttpClient<IProductClientService, ProductClientService>(clie
 {
     client.BaseAddress = new Uri(builder.Configuration.GetConnectionString("productservice") ?? "https://localhost:5001");
 })
-.AddServiceDiscovery(); 
+.AddServiceDiscovery()
+.AddStandardResilienceHandler(options =>
+{
+    options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(30);
+    options.Retry.MaxRetryAttempts = 3;
+});
 
 var app = builder.Build();
 app.MapControllers();
-
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
+    await dbContext.Database.MigrateAsync();
+}
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
