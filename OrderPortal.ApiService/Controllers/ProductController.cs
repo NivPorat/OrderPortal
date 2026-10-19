@@ -28,6 +28,34 @@ namespace OrderPortal.ApiService.Controllers
             }
             return Ok(product);
         }
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateProductAsync(string id, [FromBody] Product product, CancellationToken cancellationToken)
+        {
+            // Safety check: ensure the URL ID matches the body ID
+            if (id != product.Id)
+            {
+                return BadRequest("The ID in the URL does not match the ID in the product body.");
+            }
+
+            bool updateSuccess = await _productLogic.UpdateProductAsync(product, cancellationToken);
+            if (!updateSuccess)
+            {
+                return NotFound();
+            }
+
+            return Ok(product);
+        }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteProductAsync(string id, CancellationToken cancellationToken)
+        {
+            bool deletionSuccess = await _productLogic.DeleteProductAsync(id, cancellationToken);
+            if (!deletionSuccess)
+            {
+                return NotFound();
+            }
+
+            return Ok();
+        }
 
         [HttpGet]
         public async Task<IActionResult> GetAllProductsAsync(CancellationToken cancellationToken)
