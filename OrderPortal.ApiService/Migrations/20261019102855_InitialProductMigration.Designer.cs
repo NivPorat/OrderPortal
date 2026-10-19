@@ -11,8 +11,8 @@ using OrderPortal.ApiService.Models;
 namespace OrderPortal.ApiService.Migrations
 {
     [DbContext(typeof(OrderDbContext))]
-    [Migration("20261014132407_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20261019102855_InitialProductMigration")]
+    partial class InitialProductMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

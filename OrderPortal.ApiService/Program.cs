@@ -12,12 +12,22 @@ builder.AddServiceDefaults();
 // Add services to the container.
 builder.Services.AddProblemDetails();
 builder.Services.AddControllers();
-string dbConnectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
-builder.Services.AddDbContext<OrderDbContext>(options => options.UseNpgsql(dbConnectionString));
+string dbConnectionString = builder.Configuration.GetConnectionString("ProductConnection")
+                           ?? builder.Configuration.GetConnectionString("DefaultConnection")
+                           ?? string.Empty;
+
+builder.Services.AddDbContext<OrderDbContext>(options =>
+    options.UseNpgsql(dbConnectionString));
 builder.Services.Configure<ProductSettingsConfig>(builder.Configuration.GetSection("ProductSettings"));
 builder.Services.AddScoped<IProductLogic, ProductLogicService>();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
+    await dbContext.Database.MigrateAsync();
+}
 app.MapControllers();
 // Configure the HTTP request pipeline.
 app.UseExceptionHandler();
