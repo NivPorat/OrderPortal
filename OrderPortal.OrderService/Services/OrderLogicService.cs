@@ -1,8 +1,10 @@
-﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using OrderPortal.OrderService.Interfaces;
 using OrderPortal.OrderService.Models;
+using static OrderPortal.OrderService.Models.EnumDefinitions;
 
 namespace OrderPortal.OrderService.Services
 {
@@ -50,31 +52,45 @@ namespace OrderPortal.OrderService.Services
             return order;
         }
 
-        public async Task<bool> ValidateOrderAsync(string productId, int quantity, CancellationToken cancellationToken)
+        public async Task<EOrderCreationStatus> ValidateOrderAsync(string productId, int quantity, CancellationToken cancellationToken)
         {
             if (quantity <= 0 || quantity > _maxProducts)
             {
                 _logger.LogWarning("Validation failed: Quantity {Quantity} is invalid or exceeds max limit {MaxProducts}", quantity, _maxProducts);
-                return false;
+                return EOrderCreationStatus.ValidationError;
             }
 
-            var product = await _productClientService.GetProductAsync(productId, cancellationToken);
-            if (product == null)
+            try
             {
-                _logger.LogWarning("Validation failed: Product {ProductId} does not exist", productId);
-                return false;
+                var product = await _productClientService.GetProductAsync(productId, cancellationToken);
+                if (product == null)
+                {
+                    _logger.LogWarning("Validation failed: Product {ProductId} does not exist", productId);
+                    return EOrderCreationStatus.ProductNotFound;
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "Dependency failure: Unable to reach ProductService.");
+                return EOrderCreationStatus.DependencyUnavailable; // Maps to 503
+            }
+            catch (TaskCanceledException ex)
+            {
+                _logger.LogError(ex, "Dependency timeout: ProductService took too long to respond.");
+                return EOrderCreationStatus.DependencyUnavailable; // Maps to 503 (or Gateway Timeout)
             }
 
-            return true;
+            return EOrderCreationStatus.Success;
         }
 
-        public async Task<Order?> CreateOrderAsync(string productId, int quantity, CancellationToken cancellationToken)
+        public async Task<OrderResult?> CreateOrderAsync(string productId, int quantity, CancellationToken cancellationToken)
         {
-            bool isValid = await ValidateOrderAsync(productId, quantity, cancellationToken);
-            if (!isValid)
+            var validationResult = await ValidateOrderAsync(productId, quantity, cancellationToken);
+            if (validationResult != EOrderCreationStatus.Success)
             {
-                return null;
+                return new OrderResult { Status = validationResult, Order = null };
             }
+
 
             double totalPrice = await CalculateTotalPriceAsync(productId, quantity, cancellationToken);
 
@@ -92,7 +108,7 @@ namespace OrderPortal.OrderService.Services
 
             _logger.LogInformation("Order {OrderId} successfully saved to database.", order.Id);
 
-            return order;
+            return new OrderResult { Status = EOrderCreationStatus.Success, Order = order };
         }
     }
 }
