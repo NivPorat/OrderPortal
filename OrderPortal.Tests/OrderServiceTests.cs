@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using OrderPortal.OrderService.Interfaces;
 using OrderPortal.OrderService.Models;
 using OrderPortal.OrderService.Services;
+using System;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,6 +23,15 @@ namespace OrderPortal.Tests
             }
         }
 
+        // Add a test double for the event publisher so the test doesn't need a real RabbitMQ connection
+        private class DummyEventPublisher : IEventPublisher
+        {
+            public Task PublishAsync<TEvent>(string exchange, string routeKey, TEvent eventData, CancellationToken cancellationToken = default) where TEvent : class
+            {
+                return Task.CompletedTask;
+            }
+        }
+
         [Fact]
         public async Task CreateOrderAsync_WhenProductServiceIsDown_ReturnsDependencyUnavailable()
         {
@@ -31,10 +41,14 @@ namespace OrderPortal.Tests
 
             var dbContext = new OrderDbContext(options);
             var settings = Options.Create(new OrderSettingsConfig { MaxProducts = "5" });
+            var messageQueueSettings = Options.Create(new MessageQueueConfig { OrdersExchange = "orders-exchange", OrdersRouteKey = "order.created" });
             var logger = NullLogger<OrderLogicService>.Instance;
 
             var failingClient = new DownstreamServiceDownClient();
-            var service = new OrderLogicService(settings, logger, dbContext, failingClient);
+            var eventPublisher = new DummyEventPublisher(); // <-- Added publisher dependency
+
+            // Pass the event publisher into the OrderLogicService constructor
+            var service = new OrderLogicService(settings, logger, dbContext, failingClient, eventPublisher,messageQueueSettings);
 
             // Act - call the service and check that our error mapping catches the dependency failure
             var result = await service.CreateOrderAsync("prod-1", 2, CancellationToken.None);
