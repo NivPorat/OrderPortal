@@ -3,6 +3,7 @@ using Microsoft.Extensions.Hosting;
 using OrderPortal.OrderService.Interfaces;
 using OrderPortal.OrderService.Models;
 using OrderPortal.OrderService.Services;
+using RabbitMQ.Client;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,7 @@ builder.Services.AddSwaggerGen();
 string dbConnectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
 builder.Services.AddDbContext<OrderDbContext>(options => options.UseNpgsql(dbConnectionString));
 builder.Services.Configure<OrderSettingsConfig>(builder.Configuration.GetSection("OrderSettings"));
+builder.Services.Configure<MessageQueueConfig>(builder.Configuration.GetSection("MessageQueueSettings"));
 builder.Services.AddScoped<IOrderLogic, OrderLogicService>();
 builder.Services.AddHttpClient<IProductClientService, ProductClientService>(client =>
 {
@@ -26,6 +28,17 @@ builder.Services.AddHttpClient<IProductClientService, ProductClientService>(clie
     options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(30);
     options.Retry.MaxRetryAttempts = 3;
 });
+builder.Services.AddSingleton<IConnection>(sp =>
+{
+    var factory = new ConnectionFactory
+    {
+        HostName = builder.Configuration["RabbitMQ:HostName"] ?? "localhost"
+    };
+
+    return factory.CreateConnectionAsync().GetAwaiter().GetResult();
+});
+
+builder.Services.AddSingleton<IEventPublisher, RabbitMqEventPublisher>();
 
 var app = builder.Build();
 app.MapControllers();

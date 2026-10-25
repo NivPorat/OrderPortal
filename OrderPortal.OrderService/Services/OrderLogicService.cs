@@ -15,18 +15,24 @@ namespace OrderPortal.OrderService.Services
         private readonly ILogger<OrderLogicService> _logger;
         private readonly OrderSettingsConfig _settings;
         private readonly IProductClientService _productClientService;
+        private readonly IEventPublisher _eventPublisher;
+        private readonly MessageQueueConfig _messageQueueSettings;
 
         public OrderLogicService(
             IOptions<OrderSettingsConfig> productSettings,
             ILogger<OrderLogicService> logger,
             OrderDbContext dbset,
-            IProductClientService productClientService)
+            IProductClientService productClientService,
+            IEventPublisher eventPublisher,
+            IOptions<MessageQueueConfig> messageQueueSettings)
         {
             _settings = productSettings.Value;
             _logger = logger;
             _context = dbset;
             _productClientService = productClientService;
             _maxProducts = int.Parse(_settings.MaxProducts);
+            _eventPublisher = eventPublisher;
+            _messageQueueSettings = messageQueueSettings.Value;
         }
 
         public async Task<double> CalculateTotalPriceAsync(string productId, int quantity, CancellationToken cancellationToken)
@@ -105,8 +111,17 @@ namespace OrderPortal.OrderService.Services
 
             _context.Orders.Add(order);
             await _context.SaveChangesAsync(cancellationToken);
-
             _logger.LogInformation("Order {OrderId} successfully saved to database.", order.Id);
+            var OrderCreationEvent = new OrderCreatedEvent(
+            order.Id,
+            order.ProductId,
+            order.Quantity,
+            order.TotalPrice,
+            order.CreatedAt
+        );
+
+            await _eventPublisher.PublishAsync(_messageQueueSettings.OrdersExchange, _messageQueueSettings.OrdersRouteKey, OrderCreationEvent, cancellationToken);
+            _logger.LogInformation("Published OrderCreated event for Order {OrderId}", order.Id);
 
             return new OrderResult { Status = EOrderCreationStatus.Success, Order = order };
         }
