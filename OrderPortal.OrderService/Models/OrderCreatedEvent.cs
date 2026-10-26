@@ -5,6 +5,6 @@
     string ProductId,
     int Quantity,
     double TotalPrice,
-    DateTimeOffset CreatedAt
+    DateTime CreatedAt
 );
 }
