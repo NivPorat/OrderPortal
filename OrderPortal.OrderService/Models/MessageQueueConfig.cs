@@ -4,5 +4,6 @@
     {
        public string OrdersExchange {  get; set; } = string.Empty;
        public string OrdersRouteKey {  get; set; } = string.Empty;
+       public string OrdersCreationQueue {  get; set; } = string.Empty;
     }
 }
