@@ -108,10 +108,6 @@ namespace OrderPortal.OrderService.Services
                 TotalPrice = totalPrice,
                 CreatedAt = DateTime.UtcNow
             };
-
-            _context.Orders.Add(order);
-            await _context.SaveChangesAsync(cancellationToken);
-            _logger.LogInformation("Order {OrderId} successfully saved to database.", order.Id);
             var OrderCreationEvent = new OrderCreatedEvent(
             order.Id,
             order.ProductId,
