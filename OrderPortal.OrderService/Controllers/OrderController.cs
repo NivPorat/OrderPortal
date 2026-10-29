@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OrderPortal.OrderService.Interfaces;
 using OrderPortal.OrderService.Models;
@@ -9,7 +10,7 @@ namespace OrderPortal.OrderService.Controllers
     [Route("[controller]")]
     public class OrderController : ControllerBase
     {
-       
+
         private readonly ILogger<OrderController> _logger;
         private readonly IOrderLogic _orderLogic;
 
@@ -43,5 +44,17 @@ namespace OrderPortal.OrderService.Controllers
 
             return Ok(order);
         }
+        [HttpGet("public-status")]
+        public IActionResult GetSystemStatus() => Ok(new { status = "Online" });
+
+        // Protected endpoint - requires a valid JWT bearer token in headers
+        [HttpGet("secure-summary")]
+        [Authorize] // Returns 401 if token is missing/invalid
+        public IActionResult GetSecureOrderSummary()
+        {
+            // Access claims if needed (e.g., User.FindFirst("sub")?.Value)
+            return Ok(new { message = "Authorized access granted to order summary." });
+        }
+
     }
 }
