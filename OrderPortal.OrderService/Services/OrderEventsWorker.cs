@@ -48,7 +48,7 @@ namespace OrderPortal.OrderService.Services
                 {
                     var body = ea.Body.ToArray();
                     var jsonMessage = Encoding.UTF8.GetString(body);
-                    _logger.LogInformation($"Received message: {jsonMessage}");
+                    _logger.LogInformation("Received message: {JsonMessage}", jsonMessage);
                     var orderCreatedEvent = JsonSerializer.Deserialize<OrderCreatedEvent>(jsonMessage);
                     if (orderCreatedEvent != null)
                     {
@@ -59,7 +59,7 @@ namespace OrderPortal.OrderService.Services
                             bool isDuplicate = await orderDbContext.Orders.AnyAsync(o => o.Id == orderCreatedEvent.OrderId, cancellationToken);
                             if (isDuplicate)
                             {
-                                _logger.LogWarning($"Duplicate order event received for OrderId: {orderCreatedEvent.OrderId}. Ignoring.");
+                                _logger.LogWarning("Duplicate order event received for OrderId: {OrderId}. Ignoring.", orderCreatedEvent.OrderId);
                                 await channel.BasicAckAsync(deliveryTag: ea.DeliveryTag, multiple: false, cancellationToken: cancellationToken);
                                 return;
                             }
@@ -74,13 +74,13 @@ namespace OrderPortal.OrderService.Services
                                     if (isTransactionSavedOk)
                                     {
                                         await transaction.CommitAsync(cancellationToken);
-                                        _logger.LogInformation($"Order {orderCreatedEvent.OrderId} processed and saved to database successfully.");
+                                        _logger.LogInformation("Order {OrderId} processed and saved to database successfully.", orderCreatedEvent.OrderId);
                                         await channel.BasicAckAsync(ea.DeliveryTag, multiple: false, cancellationToken: cancellationToken);
                                     }
                                     else
                                     {
                                         await transaction.RollbackAsync(cancellationToken);
-                                        _logger.LogWarning($"Order {orderCreatedEvent.OrderId} processing was skipped/rejected.");
+                                        _logger.LogWarning("Order {OrderId} processing was skipped/rejected.", orderCreatedEvent.OrderId);
                                         await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false, cancellationToken: cancellationToken);
                                     }
                                 }

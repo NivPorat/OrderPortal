@@ -56,7 +56,7 @@ namespace OrderPortal.ApiService.Services
             EProductAdded rv = EProductAdded.PRODUCT_ADD_SUCCEEDED;
             if (await _context.Products.CountAsync(cancellationToken) > _maxProducts)
             {
-                _logger.LogWarning($"Product count cannot Exceed maximum {_maxProducts}.");
+                _logger.LogWarning("Product count cannot Exceed maximum {_maxProducts}.", _maxProducts);
                 rv = EProductAdded.PRODUCT_ADD_FAILED;
                 return rv;
             }
@@ -90,19 +90,19 @@ namespace OrderPortal.ApiService.Services
                 }
                 else
                 {
-                    _logger.LogInformation($"Product: {product.Name} | Product ID:{product.Id} does not exist. Creating new product");
+                    _logger.LogInformation("Product: {Name} | Product ID:{Id} does not exist. Creating new product", product.Name, product.Id);
                     await _context.Products.AddAsync(product, cancellationToken);
                 }
 
                 await _context.SaveChangesAsync(cancellationToken);
                 await _cachingService.InvalidateKeyAsync(product.Id);
 
-                _logger.LogInformation($"Product ID:{product.Id} has been successfully updated/created.");
+                _logger.LogInformation("Product ID:{id} has been successfully updated/created.",product.Id);
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Exception during update/upsert: {ex}");
+                _logger.LogError("Exception during update/upsert: {exception}",ex);
                 return false;
             }
         }
@@ -112,13 +112,13 @@ namespace OrderPortal.ApiService.Services
             Product? existingProduct = await GetProduct(id, cancellationToken);
             if (existingProduct != null)
             {
-                _logger.LogInformation($"Attempting to remove Product: {existingProduct.Name} | Product ID:{existingProduct.Id}");
+                _logger.LogInformation("Attempting to remove Product: {Name} | Product ID:{Id}", existingProduct.Name, existingProduct.Id);
                 try
                 {
                     _context.Products.Remove(existingProduct);
                     await _context.SaveChangesAsync(cancellationToken);
                     await _cachingService.InvalidateKeyAsync(id);
-                    _logger.LogInformation($"Product: {existingProduct.Name} | Product ID:{existingProduct.Id} Has been removed");
+                    _logger.LogInformation("Product: {name} | Product ID:{Id} Has been removed", existingProduct.Name, existingProduct.Name);
                     return true;
                 }
                 catch (Exception ex)
@@ -127,7 +127,7 @@ namespace OrderPortal.ApiService.Services
                     return false;
                 }
             }
-            _logger.LogInformation($"Product ID:{id} does not exist. removal failed");
+            _logger.LogInformation("Product ID:{id} does not exist. removal failed",id);
             return false;
         }
     }

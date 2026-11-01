@@ -26,10 +26,10 @@ namespace OrderPortal.OrderService.Services
                 durable: true,
                 cancellationToken: cancellationToken);
 
-                _logger.LogInformation($"Publishing message to Exchange:{exchange}");
+                _logger.LogInformation("Publishing message to Exchange:{Exchange}", exchange);
                 string jsonMessage = JsonSerializer.Serialize(eventData);
                 var body = Encoding.UTF8.GetBytes(jsonMessage);
-                _logger.LogInformation($"Message body:{jsonMessage}");
+                _logger.LogInformation("Message body:{JsonMessage}", jsonMessage);
 
                 await channel.BasicPublishAsync(
                 exchange: exchange,
