@@ -1,11 +1,12 @@
-﻿using RabbitMQ.Client;
-using System.Text;
-using System.Text.Json;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Options;
 using OrderPortal.OrderService.Interfaces;
 using OrderPortal.OrderService.Models;
-using Microsoft.Extensions.Options;
+using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using Microsoft.EntityFrameworkCore;
+using System.Text;
+using System.Text.Json;
 
 namespace OrderPortal.OrderService.Services
 {
@@ -62,26 +63,40 @@ namespace OrderPortal.OrderService.Services
                                 await channel.BasicAckAsync(deliveryTag: ea.DeliveryTag, multiple: false, cancellationToken: cancellationToken);
                                 return;
                             }
-                            using var transaction = await orderDbContext.Database.BeginTransactionAsync();
-                            try
+                            var strategy = orderDbContext.Database.CreateExecutionStrategy();
+                            await strategy.ExecuteAsync(async () =>
                             {
-                               if(await SaveTransactionToDB(orderCreatedEvent, orderDbContext, transaction))
+                                using var transaction = await orderDbContext.Database.BeginTransactionAsync(cancellationToken);
+                                try
                                 {
-                                    _logger.LogInformation($"Order {orderCreatedEvent.OrderId} processed and saved to database successfully.");
-                                }
+                                    bool isTransactionSavedOk = await SaveTransactionToDB(orderCreatedEvent, orderDbContext, transaction);
 
-                                await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
-                            }
-                            catch (Exception ex)
-                            {
-                                await transaction.RollbackAsync();
-                                _logger.LogError(ex, "Failed to process order {OrderId}", orderCreatedEvent.OrderId);
-                                await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true);
-                            }
+                                    if (isTransactionSavedOk)
+                                    {
+                                        await transaction.CommitAsync(cancellationToken);
+                                        _logger.LogInformation($"Order {orderCreatedEvent.OrderId} processed and saved to database successfully.");
+                                        await channel.BasicAckAsync(ea.DeliveryTag, multiple: false, cancellationToken: cancellationToken);
+                                    }
+                                    else
+                                    {
+                                        await transaction.RollbackAsync(cancellationToken);
+                                        _logger.LogWarning($"Order {orderCreatedEvent.OrderId} processing was skipped/rejected.");
+                                        await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: false, cancellationToken: cancellationToken);
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    if (transaction.GetDbTransaction().Connection != null)
+                                    {
+                                        await transaction.RollbackAsync(cancellationToken);
+                                    }
+                                    _logger.LogError(ex, "Failed to process order {OrderId}", orderCreatedEvent.OrderId);
+                                    await channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true, cancellationToken: cancellationToken);
+                                }
+                            });
                         }
                     }
                 }
-
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error processing consumed order event.");
@@ -105,16 +120,15 @@ namespace OrderPortal.OrderService.Services
                     Id = orderCreatedEvent.OrderId,
                     ProductId = orderCreatedEvent.ProductId,
                     CreatedAt = orderCreatedEvent.CreatedAt,
-                    TotalPrice = orderCreatedEvent.TotalPrice
+                    TotalPrice = orderCreatedEvent.TotalPrice,
+                    Quantity = orderCreatedEvent.Quantity
                 };
                 orderDbContext.Orders.Add(order);
                 await orderDbContext.SaveChangesAsync();
-                await transaction.CommitAsync();
                 return rv;
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();
                 _logger.LogError(ex, "Failed to save order {OrderId} to database", orderCreatedEvent.OrderId);
                 return false;
             }
