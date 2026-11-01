@@ -18,17 +18,15 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-string dbConnectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
-builder.Services.AddDbContext<OrderDbContext>(options => options.UseNpgsql(dbConnectionString));
+builder.AddNpgsqlDbContext<OrderDbContext>("DefaultConnection");
 
 builder.Services.Configure<OrderSettingsConfig>(builder.Configuration.GetSection("OrderSettings"));
 builder.Services.Configure<JwtSettingsConfig>(builder.Configuration.GetSection("Jwt"));
 builder.Services.Configure<MessageQueueConfig>(builder.Configuration.GetSection("MessageQueueSettings"));
-
 builder.Services.AddScoped<IOrderLogic, OrderLogicService>();
 builder.Services.AddHttpClient<IProductClientService, ProductClientService>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration.GetConnectionString("productservice") ?? "https://localhost:5001");
+    client.BaseAddress = new Uri("https+http://apiservice");
 })
 .AddServiceDiscovery()
 .AddStandardResilienceHandler(options =>
@@ -91,5 +89,5 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
+app.MapDefaultEndpoints();
 app.Run();

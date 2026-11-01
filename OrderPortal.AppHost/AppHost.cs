@@ -2,18 +2,22 @@ using Aspire.Hosting;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
+// --- Infrastructure Resources ---
 var postgres = builder.AddPostgres("postgres")
     .WithDataVolume();
 var redis = builder.AddRedis("redis");
 var messaging = builder.AddRabbitMQ("messaging");
 
+// --- Databases ---
 var orderDb = postgres.AddDatabase("DefaultConnection", "orderportaldb");
 var productDb = postgres.AddDatabase("ProductConnection", "productportaldb");
 
+// --- Management Tools ---
 var adminer = builder.AddContainer("adminer", "adminer")
     .WithHttpEndpoint(targetPort: 8080, name: "http")
-    .WithEnvironment("PGHOST", "postgres");
+    .WithEnvironment("ADMINER_DEFAULT_SERVER", "postgres");
 
+// --- Microservices & Projects ---
 var apiService = builder.AddProject<Projects.OrderPortal_ApiService>("apiservice")
     .WithHttpHealthCheck("/health")
     .WithReference(productDb)
@@ -24,7 +28,7 @@ var orderService = builder.AddProject<Projects.OrderPortal_OrderService>("orders
     .WithReference(orderDb)
     .WithReference(messaging)
     .WaitFor(postgres)
-     .WaitFor(messaging);
+    .WaitFor(messaging);
 
 var web = builder.AddProject<Projects.OrderPortal_Web>("webfrontend")
     .WithExternalHttpEndpoints()
@@ -33,5 +37,5 @@ var web = builder.AddProject<Projects.OrderPortal_Web>("webfrontend")
     .WithReference(orderService)
     .WaitFor(apiService)
     .WaitFor(orderService);
-    
+
 builder.Build().Run();
