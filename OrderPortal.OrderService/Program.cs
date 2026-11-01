@@ -37,15 +37,7 @@ builder.Services.AddHttpClient<IProductClientService, ProductClientService>(clie
     options.Retry.MaxRetryAttempts = 3;
 });
 
-builder.Services.AddSingleton<IConnection>(sp =>
-{
-    var factory = new ConnectionFactory
-    {
-        HostName = builder.Configuration["RabbitMQ:HostName"] ?? "localhost"
-    };
-
-    return factory.CreateConnectionAsync().GetAwaiter().GetResult();
-});
+builder.AddRabbitMQClient("messaging");
 
 builder.Services.AddSingleton<IEventPublisher, RabbitMqEventPublisher>();
 builder.Services.AddHostedService<OrderEventsWorker>();
